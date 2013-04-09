@@ -8,7 +8,7 @@ using Sample.Storage;
 
 namespace Sample.Projections
 {
-    delegate void EventIndexUpdatedHandler(long lastEventIndex);
+    public delegate void EventIndexUpdatedHandler(long lastEventIndex);
 
     public class DomainEventPublisher
     {

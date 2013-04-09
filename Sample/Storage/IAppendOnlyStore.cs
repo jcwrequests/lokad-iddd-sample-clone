@@ -52,11 +52,12 @@ namespace Sample.Storage
     {
         public readonly string Name;
         public readonly byte[] Data;
-
-        public DataWithName(string name, byte[] data)
+        public readonly long Version;
+        public DataWithName(string name, byte[] data,long version)
         {
             Name = name;
             Data = data;
+            version = version;
         }
     }
 

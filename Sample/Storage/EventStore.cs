@@ -51,6 +51,18 @@ namespace Sample.Storage
             }
             return stream;
         }
+        public EventStream LoadEventStream(long skip, int take)
+        {
+            var records = _appendOnlyStore.ReadRecords(skip, take).ToList();
+            var stream = new EventStream();
+
+            foreach (var tapeRecord in records)
+            {
+                stream.Events.AddRange(DeserializeEvent(tapeRecord.Data));
+                stream.Version = tapeRecord.Version; 
+            }
+            return stream;
+        }
         public IList<IEvent> LoadEvents(long skip, int take)
         {
             var records = _appendOnlyStore.ReadRecords(skip, take).ToList();

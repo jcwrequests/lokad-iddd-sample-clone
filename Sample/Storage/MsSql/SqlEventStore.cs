@@ -150,7 +150,8 @@ namespace Sample.Storage.MsSql
                         {
                             var data = (byte[])reader["Data"];
                             var name = (string)reader["Name"];
-                            yield return new DataWithName(name, data);
+                            var version = (int)reader["Version"];
+                            yield return new DataWithName(name, data,version);
                         }
                     }
                 }

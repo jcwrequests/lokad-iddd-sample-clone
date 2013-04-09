@@ -211,7 +211,7 @@ namespace Sample.Storage.Files
         void AddToCaches(string key, byte[] buffer, long commit)
         {
             var record = new DataWithVersion(commit, buffer);
-            _all = ImmutableAdd(_all, new DataWithName(key, buffer));
+            _all = ImmutableAdd(_all, new DataWithName(key, buffer,commit));
             _items.AddOrUpdate(key, s => new[] { record }, (s, records) => ImmutableAdd(records, record));
         }
 
