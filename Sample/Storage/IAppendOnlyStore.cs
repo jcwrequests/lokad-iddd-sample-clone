@@ -25,14 +25,14 @@ namespace Sample.Storage
         /// <param name="afterVersion">The after version.</param>
         /// <param name="maxCount">The max count.</param>
         /// <returns></returns>
-        IEnumerable<DataWithVersion> ReadRecords(string streamName, long afterVersion, int maxCount);
+        IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount);
         /// <summary>
         /// Reads the records across all streams.
         /// </summary>
         /// <param name="afterVersion">The after version.</param>
         /// <param name="maxCount">The max count.</param>
         /// <returns></returns>
-        IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount);
+        IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount);
 
         void Close();
     }
@@ -60,6 +60,25 @@ namespace Sample.Storage
             version = version;
         }
     }
+
+    public sealed class DataWithKey
+    {
+        public readonly string Key;
+        public readonly byte[] Data;
+        public readonly long StreamVersion;
+        public readonly long StoreVersion;
+
+        public DataWithKey(string key, byte[] data, long streamVersion, long storeVersion)
+        {
+            if (null == data)
+                throw new ArgumentNullException("data");
+            Key = key;
+            Data = data;
+            StreamVersion = streamVersion;
+            StoreVersion = storeVersion;
+        }
+    }
+
 
     /// <summary>
     /// Is thrown internally, when storage version does not match the condition 

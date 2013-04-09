@@ -47,7 +47,7 @@ namespace Sample.Storage
             foreach (var tapeRecord in records)
             {
                 stream.Events.AddRange(DeserializeEvent(tapeRecord.Data));
-                stream.Version = tapeRecord.Version;
+                stream.Version = tapeRecord.StreamVersion;
             }
             return stream;
         }
@@ -59,7 +59,7 @@ namespace Sample.Storage
             foreach (var tapeRecord in records)
             {
                 stream.Events.AddRange(DeserializeEvent(tapeRecord.Data));
-                stream.Version = tapeRecord.Version; 
+                stream.Version = tapeRecord.StreamVersion; 
             }
             return stream;
         }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
+using System.Linq;
 
 namespace Sample.Storage.MySql
 {
@@ -86,63 +87,71 @@ CREATE TABLE IF NOT EXISTS `ES_Events` (
                 }
             }
         }
-
-        public IEnumerable<DataWithVersion> ReadRecords(string name, long afterVersion, int maxCount)
+        public IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount)
         {
-            using (var conn = new MySqlConnection(_connectionString))
-            {
-                conn.Open();
-                const string sql =
-                    @"SELECT `Data`, `Version` FROM `ES_Events`
-                        WHERE `Name` = ?name AND `Version`>?version
-                        ORDER BY `Version`
-                        LIMIT 0,?take";
-                using (var cmd = new MySqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("?name", name);
-                    cmd.Parameters.AddWithValue("?version", afterVersion);
-                    cmd.Parameters.AddWithValue("?take", maxCount);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var data = (byte[])reader["Data"];
-                            var version = (int)reader["Version"];
-                            yield return new DataWithVersion(version, data);
-                        }
-                    }
-                }
-            }
+            return Enumerable.Empty<DataWithKey>();
         }
+//        public IEnumerable<DataWithVersion> ReadRecords(string name, long afterVersion, int maxCount)
+//        {
+//            using (var conn = new MySqlConnection(_connectionString))
+//            {
+//                conn.Open();
+//                const string sql =
+//                    @"SELECT `Data`, `Version` FROM `ES_Events`
+//                        WHERE `Name` = ?name AND `Version`>?version
+//                        ORDER BY `Version`
+//                        LIMIT 0,?take";
+//                using (var cmd = new MySqlCommand(sql, conn))
+//                {
+//                    cmd.Parameters.AddWithValue("?name", name);
+//                    cmd.Parameters.AddWithValue("?version", afterVersion);
+//                    cmd.Parameters.AddWithValue("?take", maxCount);
+//                    using (var reader = cmd.ExecuteReader())
+//                    {
+//                        while (reader.Read())
+//                        {
+//                            var data = (byte[])reader["Data"];
+//                            var version = (int)reader["Version"];
+//                            yield return new DataWithVersion(version, data);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
+//        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
+//        {
+//            using (var conn = new MySqlConnection(_connectionString))
+//            {
+//                conn.Open();
+//                const string sql =
+//                    @"SELECT `Data`, `Name` FROM `ES_Events`
+//                        WHERE `Id`>?after
+//                        ORDER BY `Id`
+//                        LIMIT 0,?take";
+//                using (var cmd = new MySqlCommand(sql, conn))
+//                {
+//                    cmd.Parameters.AddWithValue("?after", afterVersion);
+//                    cmd.Parameters.AddWithValue("?take", maxCount);
+//                    using (var reader = cmd.ExecuteReader())
+//                    {
+//                        while (reader.Read())
+//                        {
+//                            var data = (byte[])reader["Data"];
+//                            var name = (string)reader["Name"];
+//                            var version = (int)reader["Version"];
+//                            yield return new DataWithName(name, data,version);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        public IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount)
         {
-            using (var conn = new MySqlConnection(_connectionString))
-            {
-                conn.Open();
-                const string sql =
-                    @"SELECT `Data`, `Name` FROM `ES_Events`
-                        WHERE `Id`>?after
-                        ORDER BY `Id`
-                        LIMIT 0,?take";
-                using (var cmd = new MySqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("?after", afterVersion);
-                    cmd.Parameters.AddWithValue("?take", maxCount);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var data = (byte[])reader["Data"];
-                            var name = (string)reader["Name"];
-                            var version = (int)reader["Version"];
-                            yield return new DataWithName(name, data,version);
-                        }
-                    }
-                }
-            }
+            // collection is immutable so we don't care about locks
+            //return _all.Skip((int)afterVersion).Take(maxCount);
+            return Enumerable.Empty<DataWithKey>();
         }
-
         
 
         public void Close()

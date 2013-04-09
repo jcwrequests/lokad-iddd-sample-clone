@@ -102,17 +102,19 @@ namespace Sample.Storage.Azure
             }
         }
 
-        public IEnumerable<DataWithVersion> ReadRecords(string streamName, long afterVersion, int maxCount)
+        public IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount)
         {
             // no lock is needed, since we are polling immutable object.
-            DataWithVersion[] list;
-            return _items.TryGetValue(streamName, out list) ? list : Enumerable.Empty<DataWithVersion>();
+            //DataWithKey[] list;
+            //return _items.TryGetValue(streamName, out list) ? list : Enumerable.Empty<DataWithKey>();
+            return Enumerable.Empty<DataWithKey>();
         }
 
-        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
+        public IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount)
         {
             // collection is immutable so we don't care about locks
-            return _all.Skip((int)afterVersion).Take(maxCount);
+            //return _all.Skip((int)afterVersion).Take(maxCount);
+            return Enumerable.Empty<DataWithKey>();
         }
 
         public void Close()
@@ -317,5 +319,6 @@ namespace Sample.Storage.Azure
                 Version = version;
             }
         }
+
     }
 }

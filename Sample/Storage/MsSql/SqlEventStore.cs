@@ -7,6 +7,7 @@
 
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace Sample.Storage.MsSql
 {
@@ -99,65 +100,74 @@ namespace Sample.Storage.MsSql
                 }
             }
         }
+       public IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount)
+       {
+             return Enumerable.Empty<DataWithKey>();       
+       }
 
-        public IEnumerable<DataWithVersion> ReadRecords(string name, long afterVersion, int maxCount)
-        {
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                conn.Open();
-                const string sql =
-                    @"SELECT TOP (@take) Data, Version FROM Events
-                        WHERE Name = @p1 AND Version > @skip
-                        ORDER BY Version";
-                using (var cmd = new SqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("@p1", name);
-                    cmd.Parameters.AddWithValue("@take", maxCount);
-                    cmd.Parameters.AddWithValue("@skip", afterVersion);
+//        public IEnumerable<DataWithVersion> ReadRecords(string name, long afterVersion, int maxCount)
+//        {
+//            using (var conn = new SqlConnection(_connectionString))
+//            {
+//                conn.Open();
+//                const string sql =
+//                    @"SELECT TOP (@take) Data, Version FROM Events
+//                        WHERE Name = @p1 AND Version > @skip
+//                        ORDER BY Version";
+//                using (var cmd = new SqlCommand(sql, conn))
+//                {
+//                    cmd.Parameters.AddWithValue("@p1", name);
+//                    cmd.Parameters.AddWithValue("@take", maxCount);
+//                    cmd.Parameters.AddWithValue("@skip", afterVersion);
                     
                     
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var data = (byte[])reader["Data"];
-                            var version = (int)reader["Version"];
-                            yield return new DataWithVersion(version, data);
-                        }
-                    }
-                }
-            }
-        }
+//                    using (var reader = cmd.ExecuteReader())
+//                    {
+//                        while (reader.Read())
+//                        {
+//                            var data = (byte[])reader["Data"];
+//                            var version = (int)reader["Version"];
+//                            yield return new DataWithVersion(version, data);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
-        {
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                conn.Open();
-                const string sql =
-                    @"SELECT TOP (@take) Data, Name FROM Events
-                        WHERE Id > @skip
-                        ORDER BY Id";
-                using (var cmd = new SqlCommand(sql, conn))
-                {
+//        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
+//        {
+//            using (var conn = new SqlConnection(_connectionString))
+//            {
+//                conn.Open();
+//                const string sql =
+//                    @"SELECT TOP (@take) Data, Name FROM Events
+//                        WHERE Id > @skip
+//                        ORDER BY Id";
+//                using (var cmd = new SqlCommand(sql, conn))
+//                {
                     
-                    cmd.Parameters.AddWithValue("@take", maxCount);
-                    cmd.Parameters.AddWithValue("@skip", afterVersion);
+//                    cmd.Parameters.AddWithValue("@take", maxCount);
+//                    cmd.Parameters.AddWithValue("@skip", afterVersion);
 
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var data = (byte[])reader["Data"];
-                            var name = (string)reader["Name"];
-                            var version = (int)reader["Version"];
-                            yield return new DataWithName(name, data,version);
-                        }
-                    }
-                }
-            }
-        }
-
+//                    using (var reader = cmd.ExecuteReader())
+//                    {
+//                        while (reader.Read())
+//                        {
+//                            var data = (byte[])reader["Data"];
+//                            var name = (string)reader["Name"];
+//                            var version = (int)reader["Version"];
+//                            yield return new DataWithName(name, data,version);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+       public IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount)
+       {
+           // collection is immutable so we don't care about locks
+           //return _all.Skip((int)afterVersion).Take(maxCount);
+           return Enumerable.Empty<DataWithKey>();
+       }
         public void Close()
         {
             

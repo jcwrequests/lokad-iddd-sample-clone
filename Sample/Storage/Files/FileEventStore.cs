@@ -41,8 +41,11 @@ namespace Sample.Storage.Files
         FileStream _currentWriter;
 
         // caches
-        readonly ConcurrentDictionary<string, DataWithVersion[]> _items = new ConcurrentDictionary<string, DataWithVersion[]>();
-        DataWithName[] _all = new DataWithName[0];
+        //readonly ConcurrentDictionary<string, DataWithVersion[]> _items = new ConcurrentDictionary<string, DataWithVersion[]>();
+        //DataWithName[] _all = new DataWithName[0];
+
+        readonly ConcurrentDictionary<string, DataWithKey[]> _items = new ConcurrentDictionary<string, DataWithKey[]>();
+        DataWithKey[] _all = new DataWithKey[0];
 
         public void Initialize()
         {
@@ -64,7 +67,7 @@ namespace Sample.Storage.Files
             try
             {
                 _thread.EnterWriteLock();
-                _all = new DataWithName[0];
+                _all = new DataWithKey[0];
                 foreach (var record in EnumerateHistory())
                 {
                     AddToCaches(record.Name, record.Bytes, record.Version);
@@ -151,7 +154,7 @@ namespace Sample.Storage.Files
             {
                 _thread.EnterWriteLock();
 
-                var list = _items.GetOrAdd(streamName, s => new DataWithVersion[0]);
+                var list = _items.GetOrAdd(streamName, s => new DataWithKey[0]);
                 if (expectedStreamVersion >= 0)
                 {
                     if (list.Length != expectedStreamVersion)
@@ -210,9 +213,10 @@ namespace Sample.Storage.Files
 
         void AddToCaches(string key, byte[] buffer, long commit)
         {
-            var record = new DataWithVersion(commit, buffer);
-            _all = ImmutableAdd(_all, new DataWithName(key, buffer,commit));
-            _items.AddOrUpdate(key, s => new[] { record }, (s, records) => ImmutableAdd(records, record));
+            var record = new DataWithKey(key, buffer,commit,_all.Length);
+            _all = ImmutableAdd(_all, new DataWithKey(key, buffer,commit,_all.Length));
+            _items.AddOrUpdate(key, s => new[] {  record }, (s, records) => ImmutableAdd(records, record));
+            
         }
 
         static T[] ImmutableAdd<T>(T[] source, T item)
@@ -223,14 +227,14 @@ namespace Sample.Storage.Files
             return copy;
         }
 
-        public IEnumerable<DataWithVersion> ReadRecords(string streamName, long afterVersion, int maxCount)
+        public IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount)
         {
             // no lock is needed.
-            DataWithVersion[] list;
-            return _items.TryGetValue(streamName, out list) ? list : Enumerable.Empty<DataWithVersion>();
+            DataWithKey[] list;
+            return _items.TryGetValue(streamName, out list) ? list : Enumerable.Empty<DataWithKey>();
         }
 
-        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
+        public IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount)
         {
             // collection is immutable so we don't care about locks
             return _all.Skip((int)afterVersion).Take(maxCount);
