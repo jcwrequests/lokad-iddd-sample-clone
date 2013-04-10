@@ -57,7 +57,7 @@ namespace Sample.Storage
         {
             Name = name;
             Data = data;
-            version = version;
+            Version = version;
         }
     }
 

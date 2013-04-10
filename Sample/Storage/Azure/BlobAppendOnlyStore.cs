@@ -23,8 +23,8 @@ namespace Sample.Storage.Azure
         readonly CloudBlobContainer _container;
 
         // Caches
-        readonly ConcurrentDictionary<string, DataWithVersion[]> _items = new ConcurrentDictionary<string, DataWithVersion[]>();
-        DataWithName[] _all = new DataWithName[0];
+        readonly ConcurrentDictionary<string, DataWithKey[]> _items = new ConcurrentDictionary<string, DataWithKey[]>();
+        DataWithKey[] _all = new DataWithKey[0];
 
         /// <summary>
         /// Used to synchronize access between multiple threads within one process
@@ -78,7 +78,7 @@ namespace Sample.Storage.Azure
             {
                 _cacheLock.EnterWriteLock();
 
-                var list = _items.GetOrAdd(streamName, s => new DataWithVersion[0]);
+                var list = _items.GetOrAdd(streamName, s => new DataWithKey[0]);
                 if (expectedStreamVersion >= 0)
                 {
                     if (list.Length != expectedStreamVersion)
@@ -105,16 +105,16 @@ namespace Sample.Storage.Azure
         public IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount)
         {
             // no lock is needed, since we are polling immutable object.
-            //DataWithKey[] list;
-            //return _items.TryGetValue(streamName, out list) ? list : Enumerable.Empty<DataWithKey>();
-            return Enumerable.Empty<DataWithKey>();
+            DataWithKey[] list;
+            return _items.TryGetValue(streamName, out list) ? list : Enumerable.Empty<DataWithKey>();
+            //return Enumerable.Empty<DataWithKey>();
         }
 
         public IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount)
         {
             // collection is immutable so we don't care about locks
-            //return _all.Skip((int)afterVersion).Take(maxCount);
-            return Enumerable.Empty<DataWithKey>();
+            return _all.Skip((int)afterVersion).Take(maxCount);
+            //return Enumerable.Empty<DataWithKey>();
         }
 
         public void Close()
@@ -212,8 +212,8 @@ namespace Sample.Storage.Azure
 
         void AddToCaches(string key, byte[] buffer, long commit)
         {
-            var record = new DataWithVersion(commit, buffer);
-            _all = AddToNewArray(_all, new DataWithName(key, buffer,commit));
+            var record = new DataWithKey(key, buffer,commit,_all.Count());
+            _all = AddToNewArray(_all, new DataWithKey(key, buffer,commit,_all.Count() + 1));
             _items.AddOrUpdate(key, s => new[] { record }, (s, records) => AddToNewArray(records, record));
         }
 

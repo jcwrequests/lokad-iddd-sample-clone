@@ -58,7 +58,31 @@ namespace Sample.Storage.MsSql
         {
             
         }
+        private int EventStoreVersion()
+        {
+            int version;
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    const string sql =
+                        @"SELECT ISNULL(MAX(Version),0) 
+                            FROM Events";
 
+                    
+                    using (var cmd = new SqlCommand(sql, conn, tx))
+                    {
+
+                        version = (int)cmd.ExecuteScalar();
+
+                    }
+
+                    tx.Commit();
+                }
+            }
+            return version;
+        }
         public void Append(string name, byte[] data, long expectedVersion = -1)
         {
             
@@ -100,74 +124,68 @@ namespace Sample.Storage.MsSql
                 }
             }
         }
-       public IEnumerable<DataWithKey> ReadRecords(string streamName, long afterVersion, int maxCount)
+
+
+       public IEnumerable<DataWithKey> ReadRecords(string name, long afterVersion, int maxCount)
        {
-             return Enumerable.Empty<DataWithKey>();       
+           var eventStoreVersion = EventStoreVersion();
+           using (var conn = new SqlConnection(_connectionString))
+           {
+               conn.Open();
+               const string sql =
+                   @"SELECT TOP (@take) Data, Version FROM Events
+                        WHERE Name = @p1 AND Version > @skip
+                        ORDER BY Version";
+               using (var cmd = new SqlCommand(sql, conn))
+               {
+                   cmd.Parameters.AddWithValue("@p1", name);
+                   cmd.Parameters.AddWithValue("@take", maxCount);
+                   cmd.Parameters.AddWithValue("@skip", afterVersion);
+
+
+                   using (var reader = cmd.ExecuteReader())
+                   {
+                       while (reader.Read())
+                       {
+                           var data = (byte[])reader["Data"];
+                           var version = (int)reader["Version"];
+                           yield return new DataWithKey(name, data, version, eventStoreVersion);
+                       }
+                   }
+               }
+           }
        }
 
-//        public IEnumerable<DataWithVersion> ReadRecords(string name, long afterVersion, int maxCount)
-//        {
-//            using (var conn = new SqlConnection(_connectionString))
-//            {
-//                conn.Open();
-//                const string sql =
-//                    @"SELECT TOP (@take) Data, Version FROM Events
-//                        WHERE Name = @p1 AND Version > @skip
-//                        ORDER BY Version";
-//                using (var cmd = new SqlCommand(sql, conn))
-//                {
-//                    cmd.Parameters.AddWithValue("@p1", name);
-//                    cmd.Parameters.AddWithValue("@take", maxCount);
-//                    cmd.Parameters.AddWithValue("@skip", afterVersion);
-                    
-                    
-//                    using (var reader = cmd.ExecuteReader())
-//                    {
-//                        while (reader.Read())
-//                        {
-//                            var data = (byte[])reader["Data"];
-//                            var version = (int)reader["Version"];
-//                            yield return new DataWithVersion(version, data);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-//        public IEnumerable<DataWithName> ReadRecords(long afterVersion, int maxCount)
-//        {
-//            using (var conn = new SqlConnection(_connectionString))
-//            {
-//                conn.Open();
-//                const string sql =
-//                    @"SELECT TOP (@take) Data, Name FROM Events
-//                        WHERE Id > @skip
-//                        ORDER BY Id";
-//                using (var cmd = new SqlCommand(sql, conn))
-//                {
-                    
-//                    cmd.Parameters.AddWithValue("@take", maxCount);
-//                    cmd.Parameters.AddWithValue("@skip", afterVersion);
-
-//                    using (var reader = cmd.ExecuteReader())
-//                    {
-//                        while (reader.Read())
-//                        {
-//                            var data = (byte[])reader["Data"];
-//                            var name = (string)reader["Name"];
-//                            var version = (int)reader["Version"];
-//                            yield return new DataWithName(name, data,version);
-//                        }
-//                    }
-//                }
-//            }
-//        }
        public IEnumerable<DataWithKey> ReadRecords(long afterVersion, int maxCount)
        {
-           // collection is immutable so we don't care about locks
-           //return _all.Skip((int)afterVersion).Take(maxCount);
-           return Enumerable.Empty<DataWithKey>();
+           var eventStoreVersion = EventStoreVersion();
+           using (var conn = new SqlConnection(_connectionString))
+           {
+               conn.Open();
+               const string sql =
+                   @"SELECT TOP (@take) Data, Name FROM Events
+                        WHERE Id > @skip
+                        ORDER BY Id";
+               using (var cmd = new SqlCommand(sql, conn))
+               {
+
+                   cmd.Parameters.AddWithValue("@take", maxCount);
+                   cmd.Parameters.AddWithValue("@skip", afterVersion);
+
+                   using (var reader = cmd.ExecuteReader())
+                   {
+                       while (reader.Read())
+                       {
+                           var data = (byte[])reader["Data"];
+                           var name = (string)reader["Name"];
+                           var version = (int)reader["Version"];
+                           yield return new DataWithKey(name, data, version,eventStoreVersion);
+                       }
+                   }
+               }
+           }
        }
+
         public void Close()
         {
             
